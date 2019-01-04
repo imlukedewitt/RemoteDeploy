@@ -34,22 +34,19 @@ function RemoteDeploy
         if (!$jobOutput) {return}
         switch ($jobOutput[0])
         {
+            0 {$LowerLabel.text = "Installation completed successfully"}
            -1 {$LowerLabel.text = "Connected"; return}
-          -11 {$LowerLabel.text = "Installing"; return}
-          -12 {$LowerLabel.text = "Copying files"; return}
-          -13 {$LowerLabel.text = "Verifying installation"; return}
-            0
-            {
-                $LowerLabel.text = "Installation completed successfully"
-                
-            }
-            1 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
-            2 {$LowerLabel.text = "Installation failed!`n`nThe MSI returned the following error:`n$($jobOutput[1])"}
-            3 # Custom message
+           -2 {$LowerLabel.text = "Copying files"; return}
+           -3 {$LowerLabel.text = "Installing"; return}
+           -4 {$LowerLabel.text = "Verifying installation"; return}
+            1 # Custom message
             {
                 $LowerLabel.text = $jobOutput[1]
                 if ($jobOutput[2] -eq 'continue') {return}
             }
+            2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"}
+            3 {$LowerLabel.text = "Installation failed!`n`nProgram returned the following error:`n$($jobOutput[1])"}
+            4 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
         }
         $ClockTimer.stop()
         $DeployTimer.Remove_Tick($DeployTimerTick)
