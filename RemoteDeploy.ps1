@@ -44,9 +44,13 @@ function RemoteDeploy
                 $LowerLabel.text = $jobOutput[1]
                 if ($jobOutput[2] -eq 'continue') {return}
             }
-            2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"}
+            2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"; $global:cred = $null;}
             3 {$LowerLabel.text = "Installation failed!`n`nProgram returned the following error:`n$($jobOutput[1])"}
             4 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
+            default
+            {
+                $LowerLabel.text += "`nError! Received unexpected output. `n`nError message:`n$($jobOutput[1])"
+            }
         }
         $ClockTimer.stop()
         $DeployTimer.Remove_Tick($DeployTimerTick)
@@ -66,7 +70,7 @@ function RemoteDeploy
         $RemoteDeploy.ClientSize       = '290,250'
         $DeployButton.Enabled          = $true
         $StatusBar.Text                = 'Enter a Computer Name to get started'
-        Get-Job | Remove-Job -Force
+        Get-Job | Stop-Job | Remove-Job -Force
     }
 
     $ClockTimerTick =
