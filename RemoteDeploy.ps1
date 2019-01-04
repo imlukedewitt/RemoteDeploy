@@ -16,7 +16,7 @@ function RemoteDeploy
         
         $ClockTimer.start()
         $LowerLabel.text  = "Copying installation files `nto $target"
-        $installerDir     = (Get-Content "$packageDir\$packageName.ps1" -First 1).Substring(1)
+        $installerDir     = (Get-Content "$packageDir\$selectedPackage.ps1" -First 1).Substring(1)
         $installerName    = $installerDir.Split("\")[-1]
         $copyInstallerJob = Start-Job -ArgumentList $target, $installerDir, $installerName -Name "CopyInstallerJob" -ScriptBlock `
         {
@@ -71,7 +71,7 @@ function RemoteDeploy
         $DeployTimer.Remove_Tick($DeployTimerTick)
         $DeployTimer.stop()
         $ClearButton.Enabled = $true
-        (new-object -ComObject wscript.shell).Popup("Deployment complete! See window for status",0,"Remote Deploy",0)
+        # (new-object -ComObject wscript.shell).Popup("Deployment complete! See window for status",0,"Remote Deploy",0)
     }
 
     function ClearButtonClick 
