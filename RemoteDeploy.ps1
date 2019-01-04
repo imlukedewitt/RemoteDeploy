@@ -9,40 +9,43 @@ function RemoteDeploy
             $StatusBar.text = "ERROR: Please complete all fields before deploying"
             return
         }
+        $cred = Get-Credential
+        $cred = New-Object System.Management.Automation.PSCredential ("southern\$($cred.UserName)", $cred.Password)
         $DeployButton.Enabled    = $false
         $ClearButton.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '290,370'
-        
         $ClockTimer.start()
-        $LowerLabel.text  = "Copying installation files `nto $target"
-        $installerDir     = (Get-Content "$packageDir\$selectedPackage.ps1" -First 1).Substring(1)
-        $installerName    = $installerDir.Split("\")[-1]
-        $copyInstallerJob = Start-Job -ArgumentList $target, $installerDir, $installerName -Name "CopyInstallerJob" -ScriptBlock `
-        {
-            $target        = $args[0]
-            $installerDir  = $args[1]
-            $installerName = $args[2]
-            try 
-            {
-                if (!(Test-Path "\\$target\C$\RemoteDeploy")) {New-Item -ItemType Directory -Path "\\$target\C$\RemoteDeploy"}
-                Copy-Item -Path $installerDir -Destination "\\$target\C$\RemoteDeploy\$installerName" -Force -Recurse
-                Write-Output 0
-            }
-            catch { Write-Output 1,$_ }
-        }
-        Do {[System.Windows.Forms.Application]::DoEvents()} Until ($copyInstallerJob.State -eq "Completed")
-        if ((get-job -Name "CopyInstallerJob" -IncludeChildJob | Receive-Job)[0] -eq -1)
-        {
-            $LowerLabel.text = "Could not copy installation files. Error message:`n$($jobOutput[1])"
-            $ClockTimer.stop()
-            $ClearButton.Enabled = $true
-            return
-        }
 
-        $LowerLabel.text = "Files copied. Connecting to $target"
-        Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob
-        $DeployTimer.Add_Tick($DeployTimerTick)        
+        # $installerDir     = (Get-Content "$packageDir\$selectedPackage.ps1" -First 1).Substring(1)
+        # $installerName    = $installerDir.Split("\")[-1]
+        # $copyInstallerJob = Start-Job -ArgumentList $target, $installerDir, $installerName -Name "CopyInstallerJob" -ScriptBlock `
+        # {
+        #     $target        = $args[0]
+        #     $installerDir  = $args[1]
+        #     $installerName = $args[2]
+        #     try 
+        #     {
+        #         if (!(Test-Path "\\$target\C$\RemoteDeploy")) {New-Item -ItemType Directory -Path "\\$target\C$\RemoteDeploy"}
+        #         Copy-Item -Path $installerDir -Destination "\\$target\C$\RemoteDeploy\$installerName" -Force -Recurse
+        #         Write-Output 0
+        #     }
+        #     catch { Write-Output 1,$_ }
+        # }
+        # Do {[System.Windows.Forms.Application]::DoEvents()} Until ($copyInstallerJob.State -eq "Completed")
+        # if ((get-job -Name "CopyInstallerJob" -IncludeChildJob | Receive-Job)[0] -eq -1)
+        # {
+        #     $LowerLabel.text = "Could not copy installation files. Error message:`n$($jobOutput[1])"
+        #     $ClockTimer.stop()
+        #     $ClearButton.Enabled = $true
+        #     return
+        # }
+
+        
+        $LowerLabel.text = "Connecting to $target"
+        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $cred }
+        catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
+        $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
     }
 
@@ -54,6 +57,8 @@ function RemoteDeploy
         {
            -1 {$LowerLabel.text = "Connected"; return}
           -11 {$LowerLabel.text = "Installing"; return}
+          -12 {$LowerLabel.text = "Copying files"; return}
+          -13 {$LowerLabel.text = "Verifying installation"; return}
             0
             {
                 $LowerLabel.text = "Installation completed successfully"
@@ -80,8 +85,8 @@ function RemoteDeploy
         $DeployTimer.Stop()
         $UpperLabel.text               = ""
         $LowerLabel.text               = ""
-        $ComputerNameTextBox.text      = ""
-        $PackageComboBox.SelectedIndex = 0
+        # $ComputerNameTextBox.text      = ""
+        # $PackageComboBox.SelectedIndex = 0
         $RemoteDeploy.ClientSize       = '290,250'
         $DeployButton.Enabled          = $true
         $StatusBar.Text                = 'Enter a Computer Name to get started'
