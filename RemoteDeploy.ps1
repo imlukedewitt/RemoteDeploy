@@ -9,8 +9,12 @@ function RemoteDeploy
             $StatusBar.text = "ERROR: Please complete all fields before deploying"
             return
         }
-        $cred = Get-Credential
-        $cred = New-Object System.Management.Automation.PSCredential ("southern\$($cred.UserName)", $cred.Password)
+
+        if (!($global:cred))
+        {
+            $global:cred = Get-Credential
+            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)    
+        }
         $DeployButton.Enabled    = $false
         $ClearButton.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
@@ -18,7 +22,7 @@ function RemoteDeploy
         $ClockTimer.start()
         
         $LowerLabel.text = "Connecting to $target"
-        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $cred }
+        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $global:cred }
         catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
         $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
@@ -76,6 +80,8 @@ function RemoteDeploy
         $global:ProgressIndex++
         if ( $global:ProgressIndex -ge $ProgressBar.Length ) { $global:ProgressIndex = 0 }
     }
+
+    $global:cred = $null
 
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.Application]::EnableVisualStyles()
