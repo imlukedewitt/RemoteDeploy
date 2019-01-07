@@ -110,7 +110,7 @@ function RemoteDeploy
     $ComputerNameTextBox.multiline   = $false
     $ComputerNameTextBox.width       = 250
     $ComputerNameTextBox.height      = 20
-    $ComputerNameTextBox.Text        = "02130-l03009495"
+    $ComputerNameTextBox.Text        = ""
     $ComputerNameTextBox.location    = New-Object System.Drawing.Point(20,40)
     $ComputerNameTextBox.Font        = 'Microsoft Sans Serif,10'
 
@@ -131,7 +131,7 @@ function RemoteDeploy
     $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\Remote Deploy\Packages"
     $packageArr                      = ,"" + (Get-ChildItem -Path $PackageDir -force | Foreach-Object {$_.BaseName})
     $PackageComboBox.Items.AddRange($packageArr)
-    $PackageComboBox.SelectedIndex   = 1
+    $PackageComboBox.SelectedIndex   = 0
     
     $DeployButton                    = New-Object system.Windows.Forms.Button
     $DeployButton.text               = "Deploy"
