@@ -12,7 +12,7 @@ function RemoteDeploy
 
         if (!($global:cred))
         {
-            $global:cred = Get-Credential
+            $global:cred = Get-Credential -Message "Enter your lion login and password"
             $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)    
         }
         $DeployButton.Enabled    = $false
