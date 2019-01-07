@@ -55,6 +55,7 @@ function RemoteDeploy
         $ClockTimer.stop()
         $DeployTimer.Remove_Tick($DeployTimerTick)
         $DeployTimer.stop()
+        [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
         $ClearButton.Enabled = $true
         # (new-object -ComObject wscript.shell).Popup("Deployment complete! See window for status",0,"Remote Deploy",0)
     }
@@ -85,6 +86,7 @@ function RemoteDeploy
     $global:cred = $null
 
     Add-Type -AssemblyName System.Windows.Forms
+    [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic") # Used for the popup notification after installation is finished
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
     $RemoteDeploy                    = New-Object system.Windows.Forms.Form
@@ -94,7 +96,7 @@ function RemoteDeploy
     $RemoteDeploy.SizeGripStyle      = "Hide"
     # $RemoteDeploy.FormBorderStyle    = "FixedSingle"
     $RemoteDeploy.StartPosition      = "CenterScreen"
-    $RemoteDeploy.TopMost            = $true
+    # $RemoteDeploy.TopMost            = $true
 
     $ComputerNameLabel               = New-Object system.Windows.Forms.Label
     $ComputerNameLabel.text          = "Computer Name:"
@@ -193,7 +195,6 @@ function RunAsAdmin
         Start-Process $PSScriptRoot\run.cmd -Verb RunAs -WindowStyle Hidden
         Exit
     }
-
 }
 
 RunAsAdmin
