@@ -66,8 +66,6 @@ function RemoteDeploy
         $DeployTimer.Stop()
         $UpperLabel.text               = ""
         $LowerLabel.text               = ""
-        # $ComputerNameTextBox.text      = ""
-        # $PackageComboBox.SelectedIndex = 0
         $RemoteDeploy.ClientSize       = '290,250'
         $DeployButton.Enabled          = $true
         $StatusBar.Text                = 'Enter a Computer Name to get started'
@@ -94,6 +92,7 @@ function RemoteDeploy
     $RemoteDeploy.text               = "Remote Deploy"
     $RemoteDeploy.TopMost            = $false
     $RemoteDeploy.SizeGripStyle      = "Hide"
+    $RemoteDeploy.icon               = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Icon.ico"
     # $RemoteDeploy.FormBorderStyle    = "FixedSingle"
     $RemoteDeploy.StartPosition      = "CenterScreen"
     # $RemoteDeploy.TopMost            = $true
@@ -128,7 +127,7 @@ function RemoteDeploy
     $PackageComboBox.height          = 20
     $PackageComboBox.location        = New-Object System.Drawing.Point(20,110)
     $PackageComboBox.Font            = 'Microsoft Sans Serif,9'
-    $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\Remote Deploy\Packages"
+    $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Packages"
     $packageArr                      = ,"" + (Get-ChildItem -Path $PackageDir -force | Foreach-Object {$_.BaseName})
     $PackageComboBox.Items.AddRange($packageArr)
     $PackageComboBox.SelectedIndex   = 0
@@ -192,7 +191,7 @@ function RunAsAdmin
     if ($myWindowsPrincipal.IsInRole($adminRole)) { RemoteDeploy }
     else 
     {
-        Start-Process $PSScriptRoot\run.cmd -Verb RunAs -WindowStyle Hidden
+        Start-Process "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\run.cmd" -Verb RunAs -WindowStyle Hidden
         Exit
     }
 }
