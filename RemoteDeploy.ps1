@@ -9,40 +9,22 @@ function RemoteDeploy
             $StatusBar.text = "ERROR: Please complete all fields before deploying"
             return
         }
+
+        if (!($global:cred))
+        {
+            $global:cred = Get-Credential -Message "Enter your lion login and password"
+            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)    
+        }
         $DeployButton.Enabled    = $false
         $ClearButton.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '290,370'
-        
         $ClockTimer.start()
-        $LowerLabel.text  = "Copying installation files `nto $target"
-        $installerDir     = (Get-Content "$packageDir\$selectedPackage.ps1" -First 1).Substring(1)
-        $installerName    = $installerDir.Split("\")[-1]
-        $copyInstallerJob = Start-Job -ArgumentList $target, $installerDir, $installerName -Name "CopyInstallerJob" -ScriptBlock `
-        {
-            $target        = $args[0]
-            $installerDir  = $args[1]
-            $installerName = $args[2]
-            try 
-            {
-                if (!(Test-Path "\\$target\C$\RemoteDeploy")) {New-Item -ItemType Directory -Path "\\$target\C$\RemoteDeploy"}
-                Copy-Item -Path $installerDir -Destination "\\$target\C$\RemoteDeploy\$installerName" -Force -Recurse
-                Write-Output 0
-            }
-            catch { Write-Output 1,$_ }
-        }
-        Do {[System.Windows.Forms.Application]::DoEvents()} Until ($copyInstallerJob.State -eq "Completed")
-        if ((get-job -Name "CopyInstallerJob" -IncludeChildJob | Receive-Job)[0] -eq -1)
-        {
-            $LowerLabel.text = "Could not copy installation files. Error message:`n$($jobOutput[1])"
-            $ClockTimer.stop()
-            $ClearButton.Enabled = $true
-            return
-        }
-
-        $LowerLabel.text = "Files copied. Connecting to $target"
-        Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob
-        $DeployTimer.Add_Tick($DeployTimerTick)        
+        
+        $LowerLabel.text = "Connecting to $target"
+        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $global:cred }
+        catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
+        $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
     }
 
@@ -52,24 +34,28 @@ function RemoteDeploy
         if (!$jobOutput) {return}
         switch ($jobOutput[0])
         {
+            0 {$LowerLabel.text = "Installation completed successfully"}
            -1 {$LowerLabel.text = "Connected"; return}
-          -11 {$LowerLabel.text = "Installing"; return}
-            0
-            {
-                $LowerLabel.text = "Installation completed successfully"
-                
-            }
-            1 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
-            2 {$LowerLabel.text = "Installation failed!`n`nThe MSI returned the following error:`n$($jobOutput[1])"}
-            3 # Custom message
+           -2 {$LowerLabel.text = "Copying files"; return}
+           -3 {$LowerLabel.text = "Installing"; return}
+           -4 {$LowerLabel.text = "Verifying installation"; return}
+            1 # Custom message
             {
                 $LowerLabel.text = $jobOutput[1]
                 if ($jobOutput[2] -eq 'continue') {return}
+            }
+            2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"; $global:cred = $null;}
+            3 {$LowerLabel.text = "Installation failed!`n`nProgram returned the following error:`n$($jobOutput[1])"}
+            4 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
+            default
+            {
+                $LowerLabel.text += "`nError! Received unexpected output. `n`nError message:`n$($jobOutput[1])"
             }
         }
         $ClockTimer.stop()
         $DeployTimer.Remove_Tick($DeployTimerTick)
         $DeployTimer.stop()
+        [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
         $ClearButton.Enabled = $true
         # (new-object -ComObject wscript.shell).Popup("Deployment complete! See window for status",0,"Remote Deploy",0)
     }
@@ -80,12 +66,12 @@ function RemoteDeploy
         $DeployTimer.Stop()
         $UpperLabel.text               = ""
         $LowerLabel.text               = ""
-        $ComputerNameTextBox.text      = ""
-        $PackageComboBox.SelectedIndex = 0
+        # $ComputerNameTextBox.text      = ""
+        # $PackageComboBox.SelectedIndex = 0
         $RemoteDeploy.ClientSize       = '290,250'
         $DeployButton.Enabled          = $true
         $StatusBar.Text                = 'Enter a Computer Name to get started'
-        Get-Job | Remove-Job -Force
+        Get-Job | Stop-Job | Remove-Job -Force
     }
 
     $ClockTimerTick =
@@ -97,7 +83,10 @@ function RemoteDeploy
         if ( $global:ProgressIndex -ge $ProgressBar.Length ) { $global:ProgressIndex = 0 }
     }
 
+    $global:cred = $null
+
     Add-Type -AssemblyName System.Windows.Forms
+    [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic") # Used for the popup notification after installation is finished
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
     $RemoteDeploy                    = New-Object system.Windows.Forms.Form
@@ -107,7 +96,7 @@ function RemoteDeploy
     $RemoteDeploy.SizeGripStyle      = "Hide"
     # $RemoteDeploy.FormBorderStyle    = "FixedSingle"
     $RemoteDeploy.StartPosition      = "CenterScreen"
-    $RemoteDeploy.TopMost            = $true
+    # $RemoteDeploy.TopMost            = $true
 
     $ComputerNameLabel               = New-Object system.Windows.Forms.Label
     $ComputerNameLabel.text          = "Computer Name:"
@@ -121,7 +110,7 @@ function RemoteDeploy
     $ComputerNameTextBox.multiline   = $false
     $ComputerNameTextBox.width       = 250
     $ComputerNameTextBox.height      = 20
-    $ComputerNameTextBox.Text        = "02130-l03009495"
+    $ComputerNameTextBox.Text        = ""
     $ComputerNameTextBox.location    = New-Object System.Drawing.Point(20,40)
     $ComputerNameTextBox.Font        = 'Microsoft Sans Serif,10'
 
@@ -142,7 +131,7 @@ function RemoteDeploy
     $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\Remote Deploy\Packages"
     $packageArr                      = ,"" + (Get-ChildItem -Path $PackageDir -force | Foreach-Object {$_.BaseName})
     $PackageComboBox.Items.AddRange($packageArr)
-    $PackageComboBox.SelectedIndex   = 1
+    $PackageComboBox.SelectedIndex   = 0
     
     $DeployButton                    = New-Object system.Windows.Forms.Button
     $DeployButton.text               = "Deploy"
@@ -206,7 +195,6 @@ function RunAsAdmin
         Start-Process $PSScriptRoot\run.cmd -Verb RunAs -WindowStyle Hidden
         Exit
     }
-
 }
 
 RunAsAdmin
