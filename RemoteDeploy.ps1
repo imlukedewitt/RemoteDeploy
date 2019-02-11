@@ -10,13 +10,15 @@ function RemoteDeploy
             return
         }
 
-        if (!($global:cred))
+        $inputInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
+        if (!($global:cred) -and $inputInstructions[0] -eq "get credentials")
         {
             $global:cred = Get-Credential -Message "Enter your lion login and password"
-            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)    
+            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
+            $inputInstructions = $inputInstructions[1..($inputInstructions.length-1)]
         }
 
-        $inputInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
+        
         if ($inputInstructions[0] -match "^[0-9]*$") # If the first line of the package is a number, get more infomation from the user
         {
             $packageArgs = @($null) * ($inputInstructions[0] + 1)

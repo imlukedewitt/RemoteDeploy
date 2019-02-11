@@ -1,5 +1,4 @@
-#\\ConfigMgrDistro.mssu.edu\Software\Applications\CampusWide\Firefox\64.0.0\Firefox Setup 64.0.exe
-# ^^^ Installer path
+#get credentials
 
 # Exit codes
 $completed   =  0,"."

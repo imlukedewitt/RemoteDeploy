@@ -1,3 +1,4 @@
+#get credentials
 ## install VLC 3.0.4
 
 # Exit codes
