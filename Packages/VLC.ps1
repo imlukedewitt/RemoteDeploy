@@ -1,5 +1,5 @@
-#\\configmgrdistro\Software\Applications\CampusWide\VLC\3.0.4\vlc-3.0.4-win64.msi
-# ^^^ Installer path for RemoteDeploy.ps1
+#get credentials
+## install VLC 3.0.4
 
 # Exit codes
 $completed   =  0,"."
@@ -67,4 +67,3 @@ if ((Test-Path 'HKLM:\SOFTWARE\VideoLAN\VLC') -and ((Get-Item 'C:\Program Files\
     Remove-Item "C:\RemoteDeploy" -Recurse
 }
 else {Write-Output $verErr; return}
-

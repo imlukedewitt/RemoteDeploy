@@ -10,11 +10,62 @@ function RemoteDeploy
             return
         }
 
-        if (!($global:cred))
+        $inputInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
+        if (!($global:cred) -and $inputInstructions[0] -eq "get credentials")
         {
             $global:cred = Get-Credential -Message "Enter your lion login and password"
-            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)    
+            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
+            $inputInstructions = $inputInstructions[1..($inputInstructions.length-1)]
         }
+
+        
+        if ($inputInstructions[0] -match "^[0-9]*$") # If the first line of the package is a number, get more infomation from the user
+        {
+            $packageArgs = @($null) * ($inputInstructions[0] + 1)
+            $packageArgs[0] = $global:cred
+            for ($i = 1; $i -le $inputInstructions[0]; $i++)
+            {
+                $inputReqs = $inputInstructions[$i] -split "  "
+                if ($inputReqs[0] -eq 'networkshare')
+                {
+                    $networkPath = $inputReqs[1]
+                    $message = $inputReqs[2]
+                    $options = net view $networkPath
+                    $options = $options[7..($options.length - 3)]
+                    $options = foreach ($j in $options) { if ($j -match '.*[a-zA-Z].*') {write-output $j}}
+                    $options = foreach ($j in $options) { Write-Output ($j -split "  ")[0] }
+
+                    [void] $inputComboList.Items.AddRange($options)
+                    $inputComboForm.Controls.Add($inputComboList)
+                    $inputComboForm.Topmost = $true
+                    $inputComboLabel.text = $message
+                    $result = $inputComboForm.ShowDialog()
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $inputComboList.SelectedItem}
+                    $inputComboList.Items.Clear()
+                }
+                elseif ($inputReqs[0] -eq 'directory')
+                {
+                    $networkPath = $inputReqs[1]
+                    $message = $inputReqs[2]
+                    $options = (get-childitem $networkPath).name
+
+                    [void] $inputComboList.Items.AddRange($options)
+                    $inputComboForm.Controls.Add($inputComboList)
+                    $inputComboForm.Topmost = $true
+                    $inputComboLabel.text = $message
+                    $result = $inputComboForm.ShowDialog()
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $inputComboList.SelectedItem}
+                    $inputComboList.Items.Clear()
+                }
+                else
+                {
+                    $packageArgs[$i] = [Microsoft.VisualBasic.Interaction]::InputBox($inputInstructions[$i],"Remote Deploy")
+                }
+            }
+            $LowerLabel.text = $packageArgs
+        }
+        else { $packageArgs = $global:cred }
+
         $DeployButton.Enabled    = $false
         $ClearButton.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
@@ -22,7 +73,7 @@ function RemoteDeploy
         $ClockTimer.start()
         
         $LowerLabel.text = "Connecting to $target"
-        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $global:cred }
+        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $packageArgs }
         catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
         $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
@@ -57,7 +108,6 @@ function RemoteDeploy
         $DeployTimer.stop()
         [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
         $ClearButton.Enabled = $true
-        # (new-object -ComObject wscript.shell).Popup("Deployment complete! See window for status",0,"Remote Deploy",0)
     }
 
     function ClearButtonClick 
@@ -130,7 +180,7 @@ function RemoteDeploy
     $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Packages"
     $packageArr                      = ,"" + (Get-ChildItem -Path $PackageDir -force | Foreach-Object {$_.BaseName})
     $PackageComboBox.Items.AddRange($packageArr)
-    $PackageComboBox.SelectedIndex   = 0
+    $PackageComboBox.SelectedIndex   = 0shut
     
     $DeployButton                    = New-Object system.Windows.Forms.Button
     $DeployButton.text               = "Deploy"
@@ -176,6 +226,30 @@ function RemoteDeploy
 
     $DeployTimer                     = New-Object System.Windows.Forms.Timer
     $DeployTimer.Interval            = 100
+
+    $inputComboForm                  = New-Object System.Windows.Forms.Form
+    $inputComboForm.Text             = 'Remote Deploy'
+    $inputComboForm.Size             = New-Object System.Drawing.Size(300,400)
+    $inputComboForm.StartPosition    = 'CenterScreen'
+
+    $inputComboLabel                 = New-Object System.Windows.Forms.Label
+    $inputComboLabel.Location        = New-Object System.Drawing.Point(10,20)
+    $inputComboLabel.Size            = New-Object System.Drawing.Size(280,20)
+    $inputComboLabel.Text            = ""
+    $inputComboForm.Controls.Add($inputComboLabel)
+
+    $inputComboList                  = New-Object System.Windows.Forms.ListBox
+    $inputComboList.Location         = New-Object System.Drawing.Point(10,40)
+    $inputComboList.Size             = New-Object System.Drawing.Size(260,20)
+    $inputComboList.Height           = 200
+
+    $OKButton                        = New-Object System.Windows.Forms.Button
+    $OKButton.Location               = New-Object System.Drawing.Point(75,300)
+    $OKButton.Size                   = New-Object System.Drawing.Size(75,23)
+    $OKButton.Text                   = 'OK'
+    $OKButton.DialogResult           = [System.Windows.Forms.DialogResult]::OK
+    $inputComboForm.AcceptButton     = $OKButton
+    $inputComboForm.Controls.Add($OKButton)
 
     $DeployButton.Add_Click({ DeployButtonClick })
     $ClearButton.Add_Click({ ClearButtonClick })

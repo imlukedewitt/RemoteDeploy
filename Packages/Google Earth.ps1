@@ -1,5 +1,4 @@
-#\\ConfigMgrDistro.mssu.edu\Software\Applications\CampusWide\Google Earth\7.3.2.5495\8ff707e.msi
-# ^^^ Installer path
+#get credentials
 
 # Exit codes
 $completed   =  0,"."

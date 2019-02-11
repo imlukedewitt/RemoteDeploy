@@ -1,5 +1,4 @@
-#\\ConfigMgrDistro.mssu.edu\Software\Applications\CampusWide\Spark\spark_2_7_7.exe
-# ^^^ Installer path for RemoteDeploy.ps1
+#get credentials
 
 # Exit codes
 $completed   =  0,"."
