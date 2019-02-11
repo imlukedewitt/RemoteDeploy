@@ -42,3 +42,21 @@ Installation packages send status updates back to Remote Deploy using return cod
     4  : Verification Error
         The installer did not return an error, but the installation could not be verified
         Syntax: $verrErr
+
+# Argument Prompts
+Installation packages can request additional information from the user before deploying. These are defined as comments in the first lines of a package. RemoteDeploy will scan the package text for keywords before deploying. The format for these keywords are as follows:
+
+    #get credentials
+        This flag needs to be the first line of a package. It will prompt the user for their username/password. This is necessary for connecting the remote computer to a network drive, since credentials won't pass more than once. (For more information on this reference https://blogs.technet.microsoft.com/ashleymcglone/2016/08/30/powershell-remoting-kerberos-double-hop-solved-securely/)
+
+    #[number of arguments]
+        This flag tells RemoteDeploy how many argument prompts to expect.
+    
+    #[message]
+        The default argument syntax. This will create a text input box and set the user message to whatever is specified in the flag
+
+    #directory  [directory path]  [message]
+        Populates a combo selection box with the contents of a directory, such as \\ConfigMgrDistro\Software. Note that there are two spaces between each item on the line.
+
+    #networkshare  [network path]  [message]
+        Populates a combo selection box with the contents of a network share drive, such as \\print or \\goprint. Note that there are two spaces between each item on the line.
