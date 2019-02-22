@@ -13,14 +13,13 @@ function RemoteDeploy
         try
         {
             $RemoteDeploy.ClientSize = '400,500'
-            $bDeploy.Enabled = $false
             $UpperLabel.text = "Testing connection...`n----------------"
             Test-Connection -ComputerName $target -ErrorAction stop -Count 2
         }
         catch
         {
             $UpperLabel.text = "Connection Error`n----------------"
-            $LowerLabel.text = "Could not connect to $target, the device might be `noffline. Please check the name and try again"
+            $LowerLabel.text = "Could not connect to $target, the device `nmight be offline. Please check the name and try again"
             return
         }
 
@@ -80,7 +79,10 @@ function RemoteDeploy
         }
         else { $packageArgs = $global:cred }
 
-        $bClear.Enabled     = $false
+        # $bClear.Enabled          = $false
+        $bClear.text             = "Force Stop"
+        $bClear.TabStop          = $false
+        $bDeploy.Enabled = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '400,500'
         $ClockTimer.start()
@@ -119,20 +121,31 @@ function RemoteDeploy
         $ClockTimer.stop()
         $DeployTimer.Remove_Tick($DeployTimerTick)
         $DeployTimer.stop()
+        $bClear.text = "Clear"
+        $bClear.TabStop = $true
         [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
-        $bClear.Enabled = $true
     }
 
     function ClearButtonClick 
     {
         $ClockTimer.Stop()
         $DeployTimer.Stop()
-        $UpperLabel.text               = ""
-        $LowerLabel.text               = ""
-        $RemoteDeploy.ClientSize       = '400,300'
-        $bDeploy.Enabled          = $true
-        $StatusBar.Text                = 'Enter a Computer Name to get started'
         Get-Job | Stop-Job | Remove-Job -Force
+        if ($bClear.text -eq 'Clear')
+        {
+            $UpperLabel.text          = ""
+            $LowerLabel.text          = ""
+            $RemoteDeploy.ClientSize  = '400,300'
+            $bDeploy.Enabled          = $true
+            $StatusBar.Text           = 'Enter a Computer Name to get started'
+        }
+        else
+        {
+            $StatusBar.text   = 'Deployment was force stopped'
+            $LowerLabel.text += "`n`n---------------`nForce stopped"
+            $bClear.text      = 'Clear'
+            $bClear.TabStop   = $true
+        }
     }
 
     $ClockTimerTick =
@@ -142,11 +155,6 @@ function RemoteDeploy
         $UpperLabel.text             = "$($ProgressBar[$global:ProgressIndex])`n$elapsedTime"
         $global:ProgressIndex++
         if ( $global:ProgressIndex -ge $ProgressBar.Length ) { $global:ProgressIndex = 0 }
-    }
-
-    function ForceStopButtonClick
-    {
-
     }
 
     $global:cred = $null
