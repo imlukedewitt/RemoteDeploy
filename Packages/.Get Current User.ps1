@@ -21,14 +21,22 @@ if ($currentUser)
 {
     try
     {
-        Get-Process logonui -ErrorAction Stop
+        Get-Process logonui -ErrorAction Stop | Out-Null
+        # Write-Output $completed
         Write-Output $customMsg, "Device is online`nCurrent user : $currentUser`nDevice state : Locked"
         return
     }
-    catch {Write-Output $customMsg, "Device is online`nCurrent user : $currentUser`nDevice state : Unlocked";return}
+    catch
+    {
+        Write-Output ($customMsg, "Device is online`nCurrent user : $currentUser`nDevice state : Unlocked")
+        # Write-Output $completed
+        return
+    }
 }
-else {Write-Output $customMsg, "Device is online`nCurrent user : None`nDevice state : Locked"; return}
+else
+{
+    Write-Output $customMsg, "Device is online`nCurrent user : None`nDevice state : Locked"
+    return
+}
 
-
-Start-Sleep 1
 Write-Output $customMsg, "Device is online`nUnable to check user/state status"
