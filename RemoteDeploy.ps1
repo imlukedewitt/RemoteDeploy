@@ -10,6 +10,20 @@ function RemoteDeploy
             return
         }
 
+        try
+        {
+            $RemoteDeploy.ClientSize = '400,500'
+            $bDeploy.Enabled = $false
+            $UpperLabel.text = "Testing connection...`n----------------"
+            Test-Connection -ComputerName $target -ErrorAction stop -Count 2
+        }
+        catch
+        {
+            $UpperLabel.text = "Connection Error`n----------------"
+            $LowerLabel.text = "Could not connect to $target, the device might be `noffline. Please check the name and try again"
+            return
+        }
+
         $inputInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
         if (!($global:cred) -and $inputInstructions[0] -eq "get credentials")
         {
@@ -66,7 +80,6 @@ function RemoteDeploy
         }
         else { $packageArgs = $global:cred }
 
-        $bDeploy.Enabled    = $false
         $bClear.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '400,500'
@@ -129,6 +142,11 @@ function RemoteDeploy
         $UpperLabel.text             = "$($ProgressBar[$global:ProgressIndex])`n$elapsedTime"
         $global:ProgressIndex++
         if ( $global:ProgressIndex -ge $ProgressBar.Length ) { $global:ProgressIndex = 0 }
+    }
+
+    function ForceStopButtonClick
+    {
+
     }
 
     $global:cred = $null
