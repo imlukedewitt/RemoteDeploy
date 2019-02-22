@@ -14,6 +14,7 @@ Write-Output $connected
 Start-Sleep 1
 
 $currentUser = $null
+# Check if someone is logged in. Probably don't need this in a try/catch but you never know
 try {$currentUser = (Get-WMIObject -class Win32_ComputerSystem -ErrorAction Stop).username }
 catch {Write-Output $customMsg, "Device is online`nUnable to check user/state status"; return}
 
@@ -21,22 +22,16 @@ if ($currentUser)
 {
     try
     {
+        # If the computer is locked, logonui.exe will be running
         Get-Process logonui -ErrorAction Stop | Out-Null
-        # Write-Output $completed
         Write-Output $customMsg, "Device is online`nCurrent user : $currentUser`nDevice state : Locked"
         return
     }
     catch
     {
         Write-Output ($customMsg, "Device is online`nCurrent user : $currentUser`nDevice state : Unlocked")
-        # Write-Output $completed
         return
     }
 }
-else
-{
-    Write-Output $customMsg, "Device is online`nCurrent user : None`nDevice state : Locked"
-    return
-}
 
-Write-Output $customMsg, "Device is online`nUnable to check user/state status"
+Write-Output $customMsg, "Device is online`nCurrent user : None`nDevice state : Locked"

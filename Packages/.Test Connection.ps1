@@ -16,4 +16,4 @@ Write-Output $copying
 Start-Sleep 1
 Write-Output $installing
 Start-Sleep 1
-Write-Output $completed
+Write-Output $customMsg, "Tested connection successfully"
