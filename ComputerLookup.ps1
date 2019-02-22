@@ -71,6 +71,7 @@ Function ComputerLookup
     $NameLookupForm                  = New-Object system.Windows.Forms.Form
     $NameLookupForm.ClientSize       = '400,325'
     $NameLookupForm.text             = "Computer Name Lookup"
+    $NameLookupForm.StartPosition    = "CenterScreen"
     $NameLookupForm.TopMost          = $false
 
     $cBuilding                       = New-Object system.Windows.Forms.ComboBox
@@ -82,6 +83,7 @@ Function ComputerLookup
     $cBuildingList                   = @("Select building","01 - Server Room","02 - Plaster","03 - Physical Plant","04 - Ummel","05 - Kuhn","06 - Justice New Side","07 - Justice Old Side","08 - Stegge Apartments","09 - Blaine Hall","10 - McCormick","11 - East Hall","12 - Webster Hall","13 - FINART (music/art)","14 - TETPAC (theater)","15 - Football Stadium","16 - Taylor Hall","17 - Leggett and Platt","18 - Young Gym","19 - Hearnes Hall","20 - Library","21 - Reynolds Hall","22 - BSC","23 - Alumni Center","24 - Mansion Annex (URM)","25 - Student Life Center","26 - Lion Cub Academy","27 - Nixon Hall","28 - HSB","29 - Fieldhouse (North Endzone Facility)","30 - Baseball Field","31 - FEMA Shelter Facility","32 - Apartment Quads","33 - Annex (Trailers)")
     $cBuilding.Items.AddRange($cBuildingList)
     $cBuilding.SelectedIndex         = 0
+    $cBuilding.TabIndex              = 0
 
     $tRoom                           = New-Object system.Windows.Forms.TextBox
     $tRoom.multiline                 = $false
@@ -122,6 +124,7 @@ Function ComputerLookup
     $gNameGrid.Columns[1].Name       = "Last user"
     $gNameGrid.Columns[1].Width      = 135
     $gNameGrid.location              = New-Object System.Drawing.Point(50,325)
+    $gNameGrid.TabStop               = $false
 
     $header                          = New-Object system.Windows.Forms.Label
     $header.text                     = "NAME LOOKUP"
@@ -134,7 +137,7 @@ Function ComputerLookup
     $StatusBar                       = New-Object Windows.Forms.StatusBar
     $StatusBar.Text                  = 'Enter a building and room number.'
 
-    $NameLookupForm.controls.AddRange(@($gNameGrid,$cBuilding,$tRoom,$bSearch,$bClear,$header,$StatusBar))
+    $NameLookupForm.controls.AddRange(@($cBuilding,$tRoom,$bSearch,$bClear,$header,$StatusBar,$gNameGrid))
 
     [void]$NameLookupForm.ShowDialog()
 

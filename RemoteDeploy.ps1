@@ -2,9 +2,9 @@ function RemoteDeploy
 {
     function DeployButtonClick
     {
-        $target          = $ComputerNameTextBox.Text.Trim().ToUpper()
-        $selectedPackage = $PackageComboBox.SelectedItem
-        if( $target -eq "" -or $PackageComboBox.SelectedIndex -eq 0 )
+        $target          = $tComputerName.Text.Trim().ToUpper()
+        $selectedPackage = $cPackage.SelectedItem
+        if( $target -eq "" -or $target -eq "Computer Name" -or $cPackage.SelectedIndex -eq 0 )
         {
             $StatusBar.text = "ERROR: Please complete all fields before deploying"
             return
@@ -35,13 +35,13 @@ function RemoteDeploy
                     $options = foreach ($j in $options) { if ($j -match '.*[a-zA-Z].*') {write-output $j}}
                     $options = foreach ($j in $options) { Write-Output ($j -split "  ")[0] }
 
-                    [void] $inputComboList.Items.AddRange($options)
-                    $inputComboForm.Controls.Add($inputComboList)
+                    [void] $cInputArg.Items.AddRange($options)
+                    $inputComboForm.Controls.Add($cInputArg)
                     $inputComboForm.Topmost = $true
-                    $inputComboLabel.text = $message
+                    $lcInputArg.text = $message
                     $result = $inputComboForm.ShowDialog()
-                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $inputComboList.SelectedItem}
-                    $inputComboList.Items.Clear()
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $cInputArg.SelectedItem}
+                    $cInputArg.Items.Clear()
                 }
                 elseif ($inputReqs[0] -eq 'directory')
                 {
@@ -49,13 +49,13 @@ function RemoteDeploy
                     $message = $inputReqs[2]
                     $options = (get-childitem $networkPath).name
 
-                    [void] $inputComboList.Items.AddRange($options)
-                    $inputComboForm.Controls.Add($inputComboList)
+                    [void] $cInputArg.Items.AddRange($options)
+                    $inputComboForm.Controls.Add($cInputArg)
                     $inputComboForm.Topmost = $true
-                    $inputComboLabel.text = $message
+                    $lcInputArg.text = $message
                     $result = $inputComboForm.ShowDialog()
-                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $inputComboList.SelectedItem}
-                    $inputComboList.Items.Clear()
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $cInputArg.SelectedItem}
+                    $cInputArg.Items.Clear()
                 }
                 else
                 {
@@ -66,10 +66,10 @@ function RemoteDeploy
         }
         else { $packageArgs = $global:cred }
 
-        $DeployButton.Enabled    = $false
-        $ClearButton.Enabled     = $false
+        $bDeploy.Enabled    = $false
+        $bClear.Enabled     = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
-        $RemoteDeploy.ClientSize = '290,370'
+        $RemoteDeploy.ClientSize = '400,500'
         $ClockTimer.start()
         
         $LowerLabel.text = "Connecting to $target"
@@ -107,7 +107,7 @@ function RemoteDeploy
         $DeployTimer.Remove_Tick($DeployTimerTick)
         $DeployTimer.stop()
         [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
-        $ClearButton.Enabled = $true
+        $bClear.Enabled = $true
     }
 
     function ClearButtonClick 
@@ -116,8 +116,8 @@ function RemoteDeploy
         $DeployTimer.Stop()
         $UpperLabel.text               = ""
         $LowerLabel.text               = ""
-        $RemoteDeploy.ClientSize       = '290,250'
-        $DeployButton.Enabled          = $true
+        $RemoteDeploy.ClientSize       = '400,300'
+        $bDeploy.Enabled          = $true
         $StatusBar.Text                = 'Enter a Computer Name to get started'
         Get-Job | Stop-Job | Remove-Job -Force
     }
@@ -138,7 +138,7 @@ function RemoteDeploy
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
     $RemoteDeploy                    = New-Object system.Windows.Forms.Form
-    $RemoteDeploy.ClientSize         = '290,250'
+    $RemoteDeploy.ClientSize         = '400,300'
     $RemoteDeploy.text               = "Remote Deploy"
     $RemoteDeploy.TopMost            = $false
     $RemoteDeploy.SizeGripStyle      = "Hide"
@@ -147,54 +147,81 @@ function RemoteDeploy
     $RemoteDeploy.StartPosition      = "CenterScreen"
     # $RemoteDeploy.TopMost            = $true
 
-    $ComputerNameLabel               = New-Object system.Windows.Forms.Label
-    $ComputerNameLabel.text          = "Computer Name:"
-    $ComputerNameLabel.AutoSize      = $true
-    $ComputerNameLabel.width         = 25
-    $ComputerNameLabel.height        = 10
-    $ComputerNameLabel.location      = New-Object System.Drawing.Point(20,20)
-    $ComputerNameLabel.Font          = 'Microsoft Sans Serif,10'
+    $lHeader                          = New-Object system.Windows.Forms.Label
+    $lHeader.text                     = "REMOTE DEPLOY"
+    $lHeader.AutoSize                 = $true
+    $lHeader.width                    = 25
+    $lHeader.height                   = 10
+    $lHeader.location                 = New-Object System.Drawing.Point(40,35)
+    $lHeader.Font                     = 'Century Gothic,29,style=Bold'
 
-    $ComputerNameTextBox             = New-Object system.Windows.Forms.TextBox
-    $ComputerNameTextBox.multiline   = $false
-    $ComputerNameTextBox.width       = 250
-    $ComputerNameTextBox.height      = 20
-    $ComputerNameTextBox.Text        = ""
-    $ComputerNameTextBox.location    = New-Object System.Drawing.Point(20,40)
-    $ComputerNameTextBox.Font        = 'Microsoft Sans Serif,10'
+    # $ComputerNameLabel               = New-Object system.Windows.Forms.Label
+    # $ComputerNameLabel.text          = "Computer Name:"
+    # $ComputerNameLabel.AutoSize      = $true
+    # $ComputerNameLabel.width         = 25
+    # $ComputerNameLabel.height        = 10
+    # $ComputerNameLabel.location      = New-Object System.Drawing.Point(20,20)
+    # $ComputerNameLabel.Font          = 'Microsoft Sans Serif,10'
 
-    $PackageLabel                    = New-Object system.Windows.Forms.Label
-    $PackageLabel.text               = "Deployment Package:"
-    $PackageLabel.AutoSize           = $true
-    $PackageLabel.width              = 25
-    $PackageLabel.height             = 10
-    $PackageLabel.location           = New-Object System.Drawing.Point(20,90)
-    $PackageLabel.Font               = 'Microsoft Sans Serif,10'
+    $bDummyButton                    = New-Object System.Windows.Forms.Button
+    $bDummyButton.Width              = 0
+    $bDummyButton.TabIndex           = 0
+    $bDummyButton.Add_LostFocus({$bDummyButton.TabStop = $false})
 
-    $PackageComboBox                 = New-Object system.Windows.Forms.ComboBox
-    $PackageComboBox.DropDownStyle   = [System.Windows.Forms.ComboBoxStyle]::DropDownList
-    $PackageComboBox.width           = 250
-    $PackageComboBox.height          = 20
-    $PackageComboBox.location        = New-Object System.Drawing.Point(20,110)
-    $PackageComboBox.Font            = 'Microsoft Sans Serif,9'
-    $PackageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Packages"
-    $packageArr                      = ,"" + (Get-ChildItem -Path $PackageDir -force | Foreach-Object {$_.BaseName})
-    $PackageComboBox.Items.AddRange($packageArr)
-    $PackageComboBox.SelectedIndex   = 0shut
+    $tComputerName                   = New-Object system.Windows.Forms.TextBox
+    $tComputerName.multiline         = $false
+    $tComputerName.width             = 200
+    $tComputerName.height            = 20
+    $tComputerName.Text              = "Computer Name"
+    $tComputerName.ForeColor         = 'DarkGray'
+    $tComputerName.location          = New-Object System.Drawing.Point(50,115)
+    $tComputerName.Font              = 'Microsoft Sans Serif,10'
+    $tComputerName.Add_GotFocus({if($tComputerName.Text -eq 'Computer Name') {$tComputerName.Text = ''; $tComputerName.ForeColor = 'Black'}})
+    $tComputerName.Add_LostFocus({if($tComputerName.Text -eq ''){$tComputerName.Text = 'Computer Name'; $tComputerName.ForeColor = 'Darkgray'}})
+
+    $bComputerNameSearch             = New-Object system.Windows.Forms.Button
+    $bComputerNameSearch.text        = "Search"
+    $bComputerNameSearch.width       = 60
+    $bComputerNameSearch.height      = 23
+    $bComputerNameSearch.location    = New-Object System.Drawing.Point(290,115)
+    $bComputerNameSearch.Font        = 'Microsoft Sans Serif,10'
+    $bComputerNameSearch.Add_Click({Start-Process -WindowStyle Hidden \\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\runComputerLookup.cmd})
+
+    # $PackageLabel                    = New-Object system.Windows.Forms.Label
+    # $PackageLabel.text               = "Deployment Package:"
+    # $PackageLabel.AutoSize           = $true
+    # $PackageLabel.width              = 25
+    # $PackageLabel.height             = 10
+    # $PackageLabel.location           = New-Object System.Drawing.Point(20,90)
+    # $PackageLabel.Font               = 'Microsoft Sans Serif,10'
+
+    $cPackage                        = New-Object system.Windows.Forms.ComboBox
+    $cPackage.DropDownStyle          = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+    $cPackage.width                  = 300
+    $cPackage.height                 = 20
+    $cPackage.location               = New-Object System.Drawing.Point(50,165)
+    $cPackage.Font                   = 'Microsoft Sans Serif,9'
+    $packageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Packages"
+    $packageArr                      = ,"Deployment Package" + (Get-ChildItem -Path $packageDir -force | Foreach-Object {$_.BaseName})
+    $cPackage.Items.AddRange($packageArr)
+    $cPackage.Item
+    $cPackage.SelectedIndex          = 0
     
-    $DeployButton                    = New-Object system.Windows.Forms.Button
-    $DeployButton.text               = "Deploy"
-    $DeployButton.width              = 115
-    $DeployButton.height             = 30
-    $DeployButton.location           = New-Object System.Drawing.Point(20,170)
-    $DeployButton.Font               = 'Microsoft Sans Serif,10'
+    $bDeploy                         = New-Object system.Windows.Forms.Button
+    $bDeploy.text                    = "Deploy"
+    $bDeploy.width                   = 130
+    $bDeploy.height                  = 30
+    $bDeploy.location                = New-Object System.Drawing.Point(50,215)
+    $bDeploy.Font                    = 'Microsoft Sans Serif,10'
+    $bDeploy.Add_Click({ DeployButtonClick })
 
-    $ClearButton                     = New-Object system.Windows.Forms.Button
-    $ClearButton.text                = "Clear"
-    $ClearButton.width               = 115
-    $ClearButton.height              = 30
-    $ClearButton.location            = New-Object System.Drawing.Point(150,170)
-    $ClearButton.Font                = 'Microsoft Sans Serif,10'
+    $bClear                          = New-Object system.Windows.Forms.Button
+    $bClear.text                     = "Clear"
+    $bClear.width                    = 130
+    $bClear.height                   = 30
+    $bClear.location                 = New-Object System.Drawing.Point(220,215)
+    $bClear.Font                     = 'Microsoft Sans Serif,10'
+    $bClear.Add_Click({ClearButtonClick})
 
     $StatusBar                       = New-Object Windows.Forms.StatusBar
     $StatusBar.Text                  = 'Enter a computer name and select package.'
@@ -204,7 +231,7 @@ function RemoteDeploy
     $UpperLabel.AutoSize             = $true
     $UpperLabel.width                = 25
     $UpperLabel.height               = 10
-    $UpperLabel.location             = New-Object System.Drawing.Point(20,230)
+    $UpperLabel.location             = New-Object System.Drawing.Point(50,285)
     $UpperLabel.Font                 = 'Consolas,8'
 
     $LowerLabel                      = New-Object system.Windows.Forms.Label
@@ -212,10 +239,10 @@ function RemoteDeploy
     $LowerLabel.AutoSize             = $true
     $LowerLabel.width                = 25
     $LowerLabel.height               = 10
-    $LowerLabel.location             = New-Object System.Drawing.Point(20,270)
+    $LowerLabel.location             = New-Object System.Drawing.Point(50,315)
     $LowerLabel.Font                 = 'Consolas,8'
 
-    $RemoteDeploy.controls.AddRange( @($ComputerNameLabel,$ComputerNameTextBox,$PackageLabel,$PackageComboBox,$DeployButton,$ClearButton,$UpperLabel,$LowerLabel,$StatusBar) )
+    $RemoteDeploy.controls.AddRange( @($bDummyButton,$lHeader,$ComputerNameLabel,$tComputerName,$bComputerNameSearch,$PackageLabel,$cPackage,$bDeploy,$bClear,$UpperLabel,$LowerLabel,$StatusBar) )
 
     $ClockTimer                      = New-Object System.Windows.Forms.Timer
     $ClockTimer.Interval             = 100
@@ -232,29 +259,29 @@ function RemoteDeploy
     $inputComboForm.Size             = New-Object System.Drawing.Size(300,400)
     $inputComboForm.StartPosition    = 'CenterScreen'
 
-    $inputComboLabel                 = New-Object System.Windows.Forms.Label
-    $inputComboLabel.Location        = New-Object System.Drawing.Point(10,20)
-    $inputComboLabel.Size            = New-Object System.Drawing.Size(280,20)
-    $inputComboLabel.Text            = ""
-    $inputComboForm.Controls.Add($inputComboLabel)
+    $lcInputArg                      = New-Object System.Windows.Forms.Label
+    $lcInputArg.Location             = New-Object System.Drawing.Point(10,20)
+    $lcInputArg.Size                 = New-Object System.Drawing.Size(280,20)
+    $lcInputArg.Text                 = ""
+    $inputComboForm.Controls.Add($lcInputArg)
 
-    $inputComboList                  = New-Object System.Windows.Forms.ListBox
-    $inputComboList.Location         = New-Object System.Drawing.Point(10,40)
-    $inputComboList.Size             = New-Object System.Drawing.Size(260,20)
-    $inputComboList.Height           = 200
+    $cInputArg                       = New-Object System.Windows.Forms.ListBox
+    $cInputArg.Location              = New-Object System.Drawing.Point(10,40)
+    $cInputArg.Size                  = New-Object System.Drawing.Size(260,20)
+    $cInputArg.Height                = 200
 
-    $OKButton                        = New-Object System.Windows.Forms.Button
-    $OKButton.Location               = New-Object System.Drawing.Point(75,300)
-    $OKButton.Size                   = New-Object System.Drawing.Size(75,23)
-    $OKButton.Text                   = 'OK'
-    $OKButton.DialogResult           = [System.Windows.Forms.DialogResult]::OK
-    $inputComboForm.AcceptButton     = $OKButton
-    $inputComboForm.Controls.Add($OKButton)
+    $bOkay                           = New-Object System.Windows.Forms.Button
+    $bOkay.Location                  = New-Object System.Drawing.Point(75,300)
+    $bOkay.Size                      = New-Object System.Drawing.Size(75,23)
+    $bOkay.Text                      = 'OK'
+    $bOkay.DialogResult              = [System.Windows.Forms.DialogResult]::OK
+    $inputComboForm.AcceptButton     = $bOkay
+    $inputComboForm.Controls.Add($bOkay)
 
-    $DeployButton.Add_Click({ DeployButtonClick })
-    $ClearButton.Add_Click({ ClearButtonClick })
+    
+    
     $RemoteDeploy.Add_Closed({ ClearButtonClick }) #runs when the form is closed
-    $RemoteDeploy.ShowDialog()
+    [void]$RemoteDeploy.ShowDialog()
 }
 
 function RunAsAdmin
