@@ -1,3 +1,4 @@
+#1
 #get credentials
 
 # Exit codes
@@ -32,9 +33,12 @@ Start-Sleep 1
 
 if (Is-Installed) {Write-Output $customMsg, "$program $version is already installed"; return 0}
 
-Write-Output $copying
+
 Start-Sleep 1
 $cred = $args[0]
+Write-Output $customMsg, "Credentials:`n$cred", 'continue'
+Start-Sleep 3
+Write-Output $copying
 .{
     try
     {

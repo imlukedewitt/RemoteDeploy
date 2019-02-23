@@ -1,3 +1,6 @@
+#1
+#gimme some information
+
 # Exit codes
 $completed   =  0,"."
 $connected   = -1,"."

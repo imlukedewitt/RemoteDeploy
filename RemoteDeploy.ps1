@@ -2,20 +2,15 @@ function RemoteDeploy
 {
     function DeployButtonClick
     {
+        # Setup and verify variables
         $target          = $tComputerName.Text.Trim().ToUpper()
         $selectedPackage = $cPackage.SelectedItem
-        if( $target -eq "" -or $target -eq "Computer Name" -or $cPackage.SelectedIndex -eq 0 )
-        {
-            $StatusBar.text = "ERROR: Please complete all fields before deploying"
-            return
-        }
+        if ($target -eq "" -or $target -eq "Computer Name" -or $cPackage.SelectedIndex -eq 0) { $StatusBar.text = "ERROR: Please complete all fields before deploying"; return}
+        $RemoteDeploy.ClientSize = '400,500'
+        $UpperLabel.text = "Testing connection...`n----------------"
 
-        try
-        {
-            $RemoteDeploy.ClientSize = '400,500'
-            $UpperLabel.text = "Testing connection...`n----------------"
-            Test-Connection -ComputerName $target -ErrorAction stop -Count 2
-        }
+        # Check that the target is online
+        try {Test-Connection -ComputerName $target -ErrorAction stop -Count 2}
         catch
         {
             $UpperLabel.text = "Connection Error`n----------------"
@@ -23,26 +18,27 @@ function RemoteDeploy
             return
         }
 
-        $inputInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
-        if (!($global:cred) -and $inputInstructions[0] -eq "get credentials")
+        # Get instructions from package for required arguments/additional information
+        # If the first line is a number, get that many arguments from the user
+        $argumentInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
+        if ($argumentInstructions[0] -match "^[0-9]*$") 
         {
-            $global:cred = Get-Credential -Message "Enter your lion login and password"
-            $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
-            $inputInstructions = $inputInstructions[1..($inputInstructions.length-1)]
-        }
-
-        
-        if ($inputInstructions[0] -match "^[0-9]*$") # If the first line of the package is a number, get more infomation from the user
-        {
-            $packageArgs = @($null) * ($inputInstructions[0] + 1)
-            $packageArgs[0] = $global:cred
-            for ($i = 1; $i -le $inputInstructions[0]; $i++)
+            # Create array to hold the arguments, iterate through each one and get info from the user
+            $deploymentArguments = @($null) * ($argumentInstructions[0])
+            for ($i = 1; $i -le $argumentInstructions[0]; $i++)
             {
-                $inputReqs = $inputInstructions[$i] -split "  "
-                if ($inputReqs[0] -eq 'networkshare')
+                # Create array to hold each instruction component (Type, message, etc)
+                $instructionComponents = $argumentInstructions[$i] -split "  "
+                if ($instructionComponents[0] -eq 'get credentials' -and !($global:cred))
                 {
-                    $networkPath = $inputReqs[1]
-                    $message = $inputReqs[2]
+                    $global:cred = Get-Credential -Message "Enter your lion login and password"
+                    $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
+                    $deploymentArguments[$i-1] = $global:cred
+                }
+                elseif ($instructionComponents[0] -eq 'networkshare')
+                {
+                    $networkPath = $instructionComponents[1]
+                    $message = $instructionComponents[2]
                     $options = net view $networkPath
                     $options = $options[7..($options.length - 3)]
                     $options = foreach ($j in $options) { if ($j -match '.*[a-zA-Z].*') {write-output $j}}
@@ -53,13 +49,13 @@ function RemoteDeploy
                     $inputComboForm.Topmost = $true
                     $lcInputArg.text = $message
                     $result = $inputComboForm.ShowDialog()
-                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $cInputArg.SelectedItem}
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$deploymentArguments[$i-1] = $cInputArg.SelectedItem}
                     $cInputArg.Items.Clear()
                 }
-                elseif ($inputReqs[0] -eq 'directory')
+                elseif ($instructionComponents[0] -eq 'directory')
                 {
-                    $networkPath = $inputReqs[1]
-                    $message = $inputReqs[2]
+                    $networkPath = $instructionComponents[1]
+                    $message = $instructionComponents[2]
                     $options = (get-childitem $networkPath).name
 
                     [void] $cInputArg.Items.AddRange($options)
@@ -67,28 +63,25 @@ function RemoteDeploy
                     $inputComboForm.Topmost = $true
                     $lcInputArg.text = $message
                     $result = $inputComboForm.ShowDialog()
-                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$packageArgs[$i] = $cInputArg.SelectedItem}
+                    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$deploymentArguments[$i-1] = $cInputArg.SelectedItem}
                     $cInputArg.Items.Clear()
                 }
                 else
                 {
-                    $packageArgs[$i] = [Microsoft.VisualBasic.Interaction]::InputBox($inputInstructions[$i],"Remote Deploy")
+                    $deploymentArguments[$i-1] = [Microsoft.VisualBasic.Interaction]::InputBox($argumentInstructions[$i],"Remote Deploy")
                 }
             }
-            $LowerLabel.text = $packageArgs
         }
-        else { $packageArgs = $global:cred }
 
-        # $bClear.Enabled          = $false
+        
         $bClear.text             = "Force Stop"
         $bClear.TabStop          = $false
         $bDeploy.Enabled = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '400,500'
         $ClockTimer.start()
-        
         $LowerLabel.text = "Connecting to $target"
-        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $packageArgs }
+        try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $deploymentArguments }
         catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
         $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
