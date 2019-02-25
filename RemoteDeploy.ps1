@@ -176,14 +176,6 @@ function RemoteDeploy
     $lHeader.location                 = New-Object System.Drawing.Point(40,35)
     $lHeader.Font                     = 'Century Gothic,29,style=Bold'
 
-    # $ComputerNameLabel               = New-Object system.Windows.Forms.Label
-    # $ComputerNameLabel.text          = "Computer Name:"
-    # $ComputerNameLabel.AutoSize      = $true
-    # $ComputerNameLabel.width         = 25
-    # $ComputerNameLabel.height        = 10
-    # $ComputerNameLabel.location      = New-Object System.Drawing.Point(20,20)
-    # $ComputerNameLabel.Font          = 'Microsoft Sans Serif,10'
-
     $bDummyButton                    = New-Object System.Windows.Forms.Button
     $bDummyButton.Width              = 0
     $bDummyButton.TabIndex           = 0
@@ -207,14 +199,6 @@ function RemoteDeploy
     $bComputerNameSearch.location    = New-Object System.Drawing.Point(290,115)
     $bComputerNameSearch.Font        = 'Microsoft Sans Serif,10'
     $bComputerNameSearch.Add_Click({Start-Process -WindowStyle Hidden \\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\runComputerLookup.cmd})
-
-    # $PackageLabel                    = New-Object system.Windows.Forms.Label
-    # $PackageLabel.text               = "Deployment Package:"
-    # $PackageLabel.AutoSize           = $true
-    # $PackageLabel.width              = 25
-    # $PackageLabel.height             = 10
-    # $PackageLabel.location           = New-Object System.Drawing.Point(20,90)
-    # $PackageLabel.Font               = 'Microsoft Sans Serif,10'
 
     $cPackage                        = New-Object system.Windows.Forms.ComboBox
     $cPackage.DropDownStyle          = [System.Windows.Forms.ComboBoxStyle]::DropDownList
