@@ -31,15 +31,22 @@ start-sleep 1
         if (Test-Path $installFile) {return}
         
         if (!(Test-Path "C:\RemoteDeploy")) {New-Item -ItemType Directory -Path "C:\RemoteDeploy" | Out-Null}
-        New-PSDrive -name "Z" -PSProvider FileSystem -Root "\\ConfigMgrDistro\Software\Applications\CampusWide\VLC\3.0.6" -Persist -Credential $cred | Out-Null
-        Start-Sleep 1
-        if (!(Test-Path Z:\)) {Write-Output $copyErr, "Credential error! Please check `nusername/password and try again" ; return}
-        Copy-Item -Path "Z:\$($installFile.Split('\')[-1])" -Destination $installFile -Force
-        Remove-PSDrive -Name "Z" | Out-Null
+        if ($cred -eq 'pdq')
+        {
+            Write-Output "deployment from PDQ"
+            Copy-Item -Path "\\ConfigMgrDistro\Software\Applications\CampusWide\VLC\$version\$($installFile.Split('\')[-1])" -Destination $installFile -Force
+        }
+        else
+        {
+            New-PSDrive -name "Z" -PSProvider FileSystem -Root "\\ConfigMgrDistro\Software\Applications\CampusWide\VLC\$version" -Persist -Credential $cred | Out-Null
+            Start-Sleep 1
+            if (!(Test-Path Z:\)) {Write-Output $copyErr, "Credential error! Please check `nusername/password and try again" ; return}
+            Copy-Item -Path "Z:\$($installFile.Split('\')[-1])" -Destination $installFile -Force
+            Remove-PSDrive -Name "Z" | Out-Null
+        }
     }
-    catch {Write-Output $copyErr, $_; return 1}
+    catch {Write-Output $copyErr, $_; return}
 }
-
 
 # Check for 32-bit version. MSI will overwrite old 64 bit versions but not uninstall 32
 if (Test-Path 'C:\Program Files (x86)\VideoLAN\VLC\uninstall.exe')
@@ -67,5 +74,6 @@ if ((Test-Path 'HKLM:\SOFTWARE\VideoLAN\VLC') -and ((Get-Item 'C:\Program Files\
 {
     Write-Output $completed
     Remove-Item "C:\RemoteDeploy" -Recurse
+    # return 0
 }
 else {Write-Output $verErr; return}
