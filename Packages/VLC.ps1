@@ -1,6 +1,6 @@
 #1
 #get credentials
-## install VLC 3.0.4
+## install VLC 3.0.6
 
 # Exit codes
 $completed   =  0,"."
@@ -13,10 +13,11 @@ $copyErr     = 2
 $installErr  = 3
 $verErr      = 4,"."
 
-$installFile = "c:\remotedeploy\vlc-3.0.4-win64.msi"
-$version     = "3.0.4"
+$installFile = "c:\remotedeploy\vlc-3.0.6-win64.msi"
+$version     = "3.0.6"
 $parameters  = "/I $installFile /quiet /norestart"
 $parameters  = $parameters.Split(' ')
+$cred        = $args[0]
 
 Write-Output $connected
 Start-Sleep 1
@@ -28,9 +29,9 @@ start-sleep 1
     {
         # using Out-Null on directory operations to avoid sending unwanted output to RemoteDeploy.ps1
         if (Test-Path $installFile) {return}
-        $cred = $args[0]
+        
         if (!(Test-Path "C:\RemoteDeploy")) {New-Item -ItemType Directory -Path "C:\RemoteDeploy" | Out-Null}
-        New-PSDrive -name "Z" -PSProvider FileSystem -Root "\\ConfigMgrDistro\Software\Applications\CampusWide\VLC\3.0.4" -Persist -Credential $cred | Out-Null
+        New-PSDrive -name "Z" -PSProvider FileSystem -Root "\\ConfigMgrDistro\Software\Applications\CampusWide\VLC\3.0.6" -Persist -Credential $cred | Out-Null
         Start-Sleep 1
         if (!(Test-Path Z:\)) {Write-Output $copyErr, "Credential error! Please check `nusername/password and try again" ; return}
         Copy-Item -Path "Z:\$($installFile.Split('\')[-1])" -Destination $installFile -Force
