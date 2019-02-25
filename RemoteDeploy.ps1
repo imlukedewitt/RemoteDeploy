@@ -24,16 +24,19 @@ function RemoteDeploy
         if ($argumentInstructions[0] -match "^[0-9]*$") 
         {
             # Create array to hold the arguments, iterate through each one and get info from the user
-            $deploymentArguments = @($null) * ($argumentInstructions[0])
+            $deploymentArguments = @(" ") * 10
             for ($i = 1; $i -le $argumentInstructions[0]; $i++)
             {
                 # Create array to hold each instruction component (Type, message, etc)
                 $instructionComponents = $argumentInstructions[$i] -split "  "
-                if ($instructionComponents[0] -eq 'get credentials' -and !($global:cred))
+                if ($instructionComponents[0] -eq 'get credentials')
                 {
-                    $global:cred = Get-Credential -Message "Enter your lion login and password"
-                    $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
-                    $deploymentArguments[$i-1] = $global:cred
+                    if (!($global:cred))
+                    {
+                        $global:cred = Get-Credential -Message "Enter your lion login and password"
+                        $global:cred = New-Object System.Management.Automation.PSCredential ("southern\$($global:cred.UserName)", $global:cred.Password)
+                        $deploymentArguments[$i-1] = $global:cred
+                    }
                 }
                 elseif ($instructionComponents[0] -eq 'networkshare')
                 {
@@ -72,7 +75,6 @@ function RemoteDeploy
                 }
             }
         }
-
         
         $bClear.text             = "Force Stop"
         $bClear.TabStop          = $false
