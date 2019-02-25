@@ -77,7 +77,7 @@ function RemoteDeploy
         }
         
         $bClear.text             = "Force Stop"
-        $bClear.TabStop          = $false
+        $bClear.TabStop          = $false # Disable tabbing onto Force Stop button to prevent accidental presses
         $bDeploy.Enabled = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '400,500'
@@ -285,7 +285,7 @@ function RemoteDeploy
 
     
     
-    $RemoteDeploy.Add_Closed({ ClearButtonClick }) #runs when the form is closed
+    $RemoteDeploy.Add_Closed({ ClearButtonClick }) # runs when the form is closed
     [void]$RemoteDeploy.ShowDialog()
 }
 
