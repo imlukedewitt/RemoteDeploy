@@ -152,11 +152,10 @@ function RemoteDeploy
         if ( $global:ProgressIndex -ge $ProgressBar.Length ) { $global:ProgressIndex = 0 }
     }
 
-    $global:cred = $null
-
     Add-Type -AssemblyName System.Windows.Forms
     [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic") # Used for the popup notification after installation is finished
     [System.Windows.Forms.Application]::EnableVisualStyles()
+    $global:cred = $null
 
     #region Main Window
 
@@ -251,7 +250,7 @@ function RemoteDeploy
 
     $RemoteDeploy.controls.AddRange( @($bDummyButton,$lHeader,$ComputerNameLabel,$tComputerName,$bComputerNameSearch,$PackageLabel,$cPackage,$bDeploy,$bClear,$UpperLabel,$LowerLabel,$StatusBar) )
     $RemoteDeploy.Add_Closed({ ClearButtonClick }) # runs when the form is closed
-    
+
     #endregion
 
     #region Timers
