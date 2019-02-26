@@ -158,6 +158,8 @@ function RemoteDeploy
     [void] [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.VisualBasic") # Used for the popup notification after installation is finished
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
+    #region Main Window
+
     $RemoteDeploy                    = New-Object system.Windows.Forms.Form
     $RemoteDeploy.ClientSize         = '400,300'
     $RemoteDeploy.text               = "Remote Deploy"
@@ -248,6 +250,11 @@ function RemoteDeploy
     $LowerLabel.Font                 = 'Consolas,8'
 
     $RemoteDeploy.controls.AddRange( @($bDummyButton,$lHeader,$ComputerNameLabel,$tComputerName,$bComputerNameSearch,$PackageLabel,$cPackage,$bDeploy,$bClear,$UpperLabel,$LowerLabel,$StatusBar) )
+    $RemoteDeploy.Add_Closed({ ClearButtonClick }) # runs when the form is closed
+    
+    #endregion
+
+    #region Timers
 
     $ClockTimer                      = New-Object System.Windows.Forms.Timer
     $ClockTimer.Interval             = 100
@@ -255,9 +262,12 @@ function RemoteDeploy
     $global:ProgressIndex            = 0
     $global:starttime                = ""
     $ClockTimer.Add_Tick($ClockTimerTick)
-
     $DeployTimer                     = New-Object System.Windows.Forms.Timer
     $DeployTimer.Interval            = 100
+
+    #endregion
+
+    #region Combo Box Window
 
     $inputComboForm                  = New-Object System.Windows.Forms.Form
     $inputComboForm.Text             = 'Remote Deploy'
@@ -283,9 +293,9 @@ function RemoteDeploy
     $inputComboForm.AcceptButton     = $bOkay
     $inputComboForm.Controls.Add($bOkay)
 
+    #endregion
     
     
-    $RemoteDeploy.Add_Closed({ ClearButtonClick }) # runs when the form is closed
     [void]$RemoteDeploy.ShowDialog()
 }
 
