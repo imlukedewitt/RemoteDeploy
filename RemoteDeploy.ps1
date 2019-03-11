@@ -1,3 +1,8 @@
+##
+# A Powershell GUI for running scripts on remote computers.
+# Programmer: Luke DeWitt
+##
+
 function RemoteDeploy
 {
     function DeployButtonClick
@@ -69,6 +74,10 @@ function RemoteDeploy
                     if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$deploymentArguments[$i-1] = $cInputArg.SelectedItem}
                     $cInputArg.Items.Clear()
                 }
+                elseif ($instructionComponents[0 -eq 'msgbox'])
+                {
+                    [Microsoft.VisualBasic.Interaction]::MsgBox($instructionComponents[1])
+                }
                 else
                 {
                     $deploymentArguments[$i-1] = [Microsoft.VisualBasic.Interaction]::InputBox($argumentInstructions[$i],"Remote Deploy")
@@ -91,6 +100,10 @@ function RemoteDeploy
 
     $DeployTimerTick = 
     {
+        # We're using a Timer to check the status of the background job and keep the GUI responsive
+        # Every 100ms the timer checks for output from the job and takes action based on the switch/case below.
+        # If this feels hacky, it's because it is. Powershell wasn't really intended to be used for GUIs.
+
         $jobOutput = Get-Job -IncludeChildJob | Receive-Job
         if (!$jobOutput) {return}
         switch ($jobOutput[0])
