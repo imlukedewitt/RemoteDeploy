@@ -74,7 +74,7 @@ function RemoteDeploy
                     if ($result -eq [System.Windows.Forms.DialogResult]::OK) {$deploymentArguments[$i-1] = $cInputArg.SelectedItem}
                     $cInputArg.Items.Clear()
                 }
-                elseif ($instructionComponents[0 -eq 'msgbox'])
+                elseif ($instructionComponents[0] -eq 'msgbox')
                 {
                     [Microsoft.VisualBasic.Interaction]::MsgBox($instructionComponents[1])
                 }
