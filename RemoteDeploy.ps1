@@ -7,12 +7,18 @@ function RemoteDeploy
 {
     function DeployButtonClick
     {
+
+        #TODO: add user/target/package/time to log file. Hide/lock down log file
+        
+
         # Setup and verify variables
         $target          = $tComputerName.Text.Trim().ToUpper()
         $selectedPackage = $cPackage.SelectedItem
         if ($target -eq "" -or $target -eq "Computer Name" -or $cPackage.SelectedIndex -eq 0) { $StatusBar.text = "ERROR: Please complete all fields before deploying"; return}
         $RemoteDeploy.ClientSize = '400,500'
         $UpperLabel.text = "Testing connection...`n----------------"
+
+        "$(Get-Date)  |||  $($env:USERNAME)   |||   Target: $target   |||   Package: $selectedPackage `n" | Out-File -FilePath "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\.log" -Append -Force
 
         # Check that the target is online
         try {Test-Connection -ComputerName $target -ErrorAction stop -Count 2}
