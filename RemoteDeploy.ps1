@@ -7,10 +7,6 @@ function RemoteDeploy
 {
     function DeployButtonClick
     {
-
-        #TODO: add user/target/package/time to log file. Hide/lock down log file
-        
-
         # Setup and verify variables
         $target          = $tComputerName.Text.Trim().ToUpper()
         $selectedPackage = $cPackage.SelectedItem
