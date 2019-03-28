@@ -18,11 +18,9 @@ if(!(Test-Path "C:\Program Files\TightVNC\tvnserver.exe")) {write-output $custom
 
 Write-output $custommsg, "Starting service...", "continue"
 start-sleep 1
-if (Get-Process tvnserver -ErrorAction SilentlyContinue ) {Write-Output $completed; return}
-else
+while (!(Get-Process tvnserver -ErrorAction SilentlyContinue))
 {
-    try {net start tvnserver | Out-Null}
-    catch {Write-Output $customMsg, "Error! Could not start service. Error message:`n`n$_";return}
+    try   { net start tvnserver | Out-Null }
+    catch { Write-Output $customMsg, "Error! Could not start service. Error message:`n`n$_"; return }
 }
-
-if (Get-Process tvnserver -ErrorAction SilentlyContinue ) {Write-Output $completed} else {Write-Output $verErr}
+Write-Output $completed
