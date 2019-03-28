@@ -122,7 +122,7 @@ function RemoteDeploy
             }
             2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"; $global:cred = $null;}
             3 {$LowerLabel.text = "Installation failed!`n`nProgram returned the following error:`n$($jobOutput[1])"}
-            4 {$LowerLabel.text = "Failed!`n`nThe installation could not be verified"}
+            4 {$LowerLabel.text = "Failed!`n`nThe deployment finished without error, but `ninstallation could not be verified"}
             default
             {
                 $LowerLabel.text += "`nError! Received unexpected output. `n`nError message:`n$($jobOutput[1])"
