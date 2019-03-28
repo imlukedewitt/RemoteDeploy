@@ -24,8 +24,12 @@ try
 {   
     cmd.exe /c "RUNDLL32 PRINTUI.DLL, PrintUIEntry /ga /u /n`"$printerPath`"" 
     Write-Output $completed
+    return
 }
 catch
 {
     Write-Output $installErr, $_
 }
+
+start-sleep 1
+Write-Output $verErr
