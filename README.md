@@ -5,7 +5,7 @@ Remote Deploy uses a powershell GUI to silently run/monitor software installatio
 Enter a computer name or server name, and select a package from the dropdown list. Remote Deploy will copy the necessary files to the target computer, start a remote powershell session as a job, and wait for output from the job using a winforms timer object.
 
 # Return Arrays
-Installation packages send status updates back to Remote Deploy using return codes. All return codes are arrays, with the first index being the return code and following indexes being any additional information. There are several codes with pre-written status messages, and a custom code for misc updates. These codes are pre-configured as functions in RemoteDeploy.ps1 and are sent to installation packages as an argmument.
+Installation packages send status updates back to Remote Deploy using return codes. All return codes are arrays, with the first index being the return code and following indexes being any additional information. There are several codes with pre-written status messages, and a custom code for misc updates. These codes are pre-configured as functions in RemoteDeploy.ps1 and are sent to installation packages as an argument.
 
     0  : Completed
         The installer finished and the installation was verified.
