@@ -1,6 +1,5 @@
-# TODO:
-#
-# add launch button to Remote Deploy
+## Config
+$computerNameListPath = "redacted"
 
 Function ComputerLookup
 {
@@ -32,7 +31,7 @@ Function ComputerLookup
         $cBuilding.SelectedIndex   = 0
         $tRoom.text                = 'Room number / Username'
         $tRoom.ForeColor           = 'Darkgray'
-        $StatusBar.text = 'Enter a building and room number.'
+        $StatusBar.text            = 'Enter a building and room number.'
         ClearGrid
     }
 
@@ -45,7 +44,7 @@ Function ComputerLookup
         $NameLookupForm.ClientSize = '400,635'
 
         # Get matching names from a text list. PDQ updates this list every morning.
-        $allComputerNames = Get-Content -Path "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\ComputerNames.txt"
+        $allComputerNames = Get-Content -Path $computerNameListPath
         $matchingComputerNames = $allComputerNames | Where-Object {$_ -like "*$searchQuery*"}
         ClearGrid
         if(!$matchingComputerNames) {$gNameGrid[0,0].value = "No results found" ; return}
