@@ -1,40 +1,41 @@
 ##
 # A Powershell GUI for running scripts on remote computers.
-# Programmer: Luke DeWitt
+# Made by Luke
 ##
 
 function RemoteDeploy
 {
     function DeployButtonClick
     {
-        # Setup and verify variables
+        ## Setup and verify variables
         $target          = $tComputerName.Text.Trim().ToUpper()
         $selectedPackage = $cPackage.SelectedItem
         if ($target -eq "" -or $target -eq "Computer Name" -or $cPackage.SelectedIndex -eq 0) { $StatusBar.text = "ERROR: Please complete all fields before deploying"; return}
         $RemoteDeploy.ClientSize = '400,500'
         $UpperLabel.text = "Testing connection...`n----------------"
 
-        "$(Get-Date)  |||  $($env:USERNAME)   |||   Target: $target   |||   Package: $selectedPackage `n" | Out-File -FilePath "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\.log" -Append -Force
+        "$(Get-Date)  |||  $($env:USERNAME)   |||   Target: $target   |||   Package: $selectedPackage `n" | Out-File -FilePath "\\redacted\RemoteDeploy\.log" -Append -Force
 
-        # Check that the target is online
-        try {Test-Connection -ComputerName $target -ErrorAction stop -Count 2}
+        ## Check that the target is online
+        try {Test-Connection -ComputerName $target -ErrorAction stop -Count 1}
         catch
         {
             $UpperLabel.text = "Connection Error`n----------------"
-            $LowerLabel.text = "Could not connect to $target, the device `nmight be offline. Please check the name and try again"
+            $LowerLabel.text = "Could not connect to $target, the device might be offline. `r`n`r`nPlease check the name and try again."
             return
         }
 
-        # Get instructions from package for required arguments/additional information
-        # If the first line is a number, get that many arguments from the user
+        ## Create array to hold the arguments that will be passed to the remote script
+        $deploymentArguments = @(" ") * 10
+        $deploymentArguments[9] = $returnCodes
+        ## Get instructions from package for required arguments/additional information
+        ## If the first line is a number, get that many arguments from the user
         $argumentInstructions = (Get-Content "$packageDir\$selectedPackage.ps1") | ForEach-Object { $_.substring(1) }
         if ($argumentInstructions[0] -match "^[0-9]*$") 
         {
-            # Create array to hold the arguments, iterate through each one and get info from the user
-            $deploymentArguments = @(" ") * 10
             for ($i = 1; $i -le $argumentInstructions[0]; $i++)
             {
-                # Create array to hold each instruction component (Type, message, etc)
+                ## Create array to hold each instruction component (Type, message, etc)
                 $instructionComponents = $argumentInstructions[$i] -split "  "
                 if ($instructionComponents[0] -eq 'get credentials')
                 {
@@ -88,44 +89,40 @@ function RemoteDeploy
         }
         
         $bClear.text             = "Force Stop"
-        $bClear.TabStop          = $false # Disable tabbing onto Force Stop button to prevent accidental presses
-        $bDeploy.Enabled = $false
+        $bClear.TabStop          = $false ## Disable tabbing onto Force Stop button to prevent accidental presses
+        $bDeploy.Enabled         = $false
         $global:startTime        = get-date -Format  "yyyy-MM-dd HH:mm:ss"
         $RemoteDeploy.ClientSize = '400,500'
         $ClockTimer.start()
         $LowerLabel.text = "Connecting to $target"
         try { Invoke-Command -ComputerName $target -FilePath "$packageDir\$selectedPackage.ps1" -AsJob -ArgumentList $deploymentArguments }
-        catch { $LowerLabel.text = "Couldn't connect! Error message:`n$_" ; return}
+        catch { $LowerLabel.text = "Couldn't connect! Error message:`r`n$_" ; return}
         $DeployTimer.Add_Tick($DeployTimerTick)
         $DeployTimer.start()
     }
 
     $DeployTimerTick = 
     {
-        # We're using a Timer to check the status of the background job and keep the GUI responsive
-        # Every 100ms the timer checks for output from the job and takes action based on the switch/case below.
-        # If this feels hacky, it's because it is. Powershell wasn't really intended to be used for GUIs.
+        ## We're using a Timer to check the status of the background job and keep the GUI responsive
+        ## Every 100ms the timer checks for output from the job and takes action based on the switch/case below.
+        ## If this feels hacky, it's because it is. Powershell wasn't really intended to be used for GUIs.
 
         $jobOutput = Get-Job -IncludeChildJob | Receive-Job
         if (!$jobOutput) {return}
         switch ($jobOutput[0])
         {
-            0 {$LowerLabel.text = "Installation completed successfully"}
-           -1 {$LowerLabel.text = "Connected"; return}
-           -2 {$LowerLabel.text = "Copying files"; return}
-           -3 {$LowerLabel.text = "Installing"; return}
-           -4 {$LowerLabel.text = "Verifying installation"; return}
-            1 # Custom message
-            {
-                $LowerLabel.text = $jobOutput[1]
-                if ($jobOutput[2] -eq 'continue') {return}
-            }
-            2 {$LowerLabel.text = "Could not copy files. Error from program:`n$($jobOutput[1])"; $global:cred = $null;}
-            3 {$LowerLabel.text = "Installation failed!`n`nProgram returned the following error:`n$($jobOutput[1])"}
-            4 {$LowerLabel.text = "Failed!`n`nThe deployment finished without error, but `ninstallation could not be verified"}
+            0  {$LowerLabel.text = "Installation completed successfully"}
+            -1 {$LowerLabel.text = "Connected"; return}
+            -2 {$LowerLabel.text = "Copying files"; return}
+            -3 {$LowerLabel.text = "Installing"; return}
+            -4 {$LowerLabel.text = "Verifying installation"; return}
+            1  {$LowerLabel.text = $jobOutput[1]; if ($jobOutput[2] -eq $true ) {return}}
+            2  {$LowerLabel.text = "Could not copy files. Error from program:`r`n`r`n$($jobOutput[1])"; $global:cred = $null;}
+            3  {$LowerLabel.text = "Installation failed!`r`n`r`nProgram returned the following error:`r`n`r`n$($jobOutput[1])"}
+            4  {$LowerLabel.text = "The installer finished without error, but installation could not be verified"}
             default
             {
-                $LowerLabel.text += "`nError! Received unexpected output. `n`nError message:`n$($jobOutput[1])"
+                $LowerLabel.text += "`r`nError! Received unexpected output. `r`n`r`nError message:`r`n$($jobOutput[1])"
             }
         }
         $ClockTimer.stop()
@@ -134,6 +131,46 @@ function RemoteDeploy
         $bClear.text = "Clear"
         $bClear.TabStop = $true
         [Microsoft.VisualBasic.Interaction]::MsgBox("Deployment finished! See Remote Deploy window for details.", "OKOnly,SystemModal,Information,DefaultButton2", "Remote Deploy")
+    }
+
+    $returnCodes =
+    {
+        ## This scriptblock is sent to remote sessions as argument, and the remote sessions run the scriptblock with invoke-expression
+        ## This is an easy to handle the outputs needed for the remote sessions to send their status back to Remote Deploy
+        function Status
+        {
+            param($type)
+            switch ($type)
+            {
+                'completed'  {Write-Output  0,'.'}
+                'connected'  {Write-Output -1,'.'}
+                'copying'    {Write-Output -2,'.'}
+                'installing' {Write-Output -3,'.'}
+                'verifying'  {Write-Output -4,'.'}
+                Default      {Write-Output 1,$type,$true}
+            }
+            Start-Sleep 1
+        }
+        function Error
+        {
+            param($type,$errorMessage)
+            switch ($type)
+            {
+                { @('copy','copying','copyErr') -contains $_ }          {Write-Output 2, $errorMessage}
+                { @('install','installing','installErr') -contains $_ } {Write-Output 3, $errorMessage}
+                { @('verify','verifying','verErr') -contains $_ }       {Write-Output 4,'.'}
+                Default                                                 {Write-Output 1,$type,$false}
+            }
+            Start-Sleep 1
+        }
+
+        ## This one is kind of redundant, but it's nice to have
+        function customMessage
+        {
+            param($message,$continue)
+            if($continue -eq $true) {Write-Output 1,$message,$true}
+            else {Write-Output 1,$message,$false}
+        }
     }
 
     function ClearButtonClick 
@@ -152,7 +189,7 @@ function RemoteDeploy
         else
         {
             $StatusBar.text   = 'Deployment was force stopped'
-            $LowerLabel.text += "`n`n---------------`nForce stopped"
+            $LowerLabel.text += "`r`n`r`n---------------`r`nForce stopped"
             $bClear.text      = 'Clear'
             $bClear.TabStop   = $true
         }
@@ -179,10 +216,9 @@ function RemoteDeploy
     $RemoteDeploy.text               = "Remote Deploy"
     $RemoteDeploy.TopMost            = $false
     $RemoteDeploy.SizeGripStyle      = "Hide"
-    $RemoteDeploy.icon               = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Icon.ico"
-    # $RemoteDeploy.FormBorderStyle    = "FixedSingle"
+    $RemoteDeploy.icon               = "\\redacted\RemoteDeploy\Icon.ico"
+    $RemoteDeploy.FormBorderStyle    = "FixedSingle"
     $RemoteDeploy.StartPosition      = "CenterScreen"
-    # $RemoteDeploy.TopMost            = $true
 
     $lHeader                          = New-Object system.Windows.Forms.Label
     $lHeader.text                     = "REMOTE DEPLOY"
@@ -214,7 +250,7 @@ function RemoteDeploy
     $bComputerNameSearch.height      = 23
     $bComputerNameSearch.location    = New-Object System.Drawing.Point(290,115)
     $bComputerNameSearch.Font        = 'Microsoft Sans Serif,10'
-    $bComputerNameSearch.Add_Click({Start-Process -WindowStyle Hidden \\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\runComputerLookup.cmd})
+    $bComputerNameSearch.Add_Click({Start-Process -WindowStyle Hidden \\redacted\RemoteDeploy\runComputerLookup.cmd})
 
     $cPackage                        = New-Object system.Windows.Forms.ComboBox
     $cPackage.DropDownStyle          = [System.Windows.Forms.ComboBoxStyle]::DropDownList
@@ -222,7 +258,7 @@ function RemoteDeploy
     $cPackage.height                 = 20
     $cPackage.location               = New-Object System.Drawing.Point(50,165)
     $cPackage.Font                   = 'Microsoft Sans Serif,9'
-    $packageDir                      = "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\Packages"
+    $packageDir                      = "\\redacted\RemoteDeploy\Packages"
     $packageArr                      = ,"Deployment Package" + (Get-ChildItem -Path $packageDir -force | Foreach-Object {$_.BaseName})
     $cPackage.Items.AddRange($packageArr)
     $cPackage.Item
@@ -255,11 +291,13 @@ function RemoteDeploy
     $UpperLabel.location             = New-Object System.Drawing.Point(50,285)
     $UpperLabel.Font                 = 'Consolas,8'
 
-    $LowerLabel                      = New-Object system.Windows.Forms.Label
+    $LowerLabel                      = New-Object system.Windows.Forms.TextBox
     $LowerLabel.text                 = ""
-    $LowerLabel.AutoSize             = $true
-    $LowerLabel.width                = 25
-    $LowerLabel.height               = 10
+    $LowerLabel.ScrollBars           = "Vertical"
+    $LowerLabel.Multiline            = $true
+    $LowerLabel.ReadOnly             = $true
+    $LowerLabel.width                = 300
+    $LowerLabel.height               = 150
     $LowerLabel.location             = New-Object System.Drawing.Point(50,315)
     $LowerLabel.Font                 = 'Consolas,8'
 
@@ -321,7 +359,7 @@ function RunAsAdmin
     if ($myWindowsPrincipal.IsInRole($adminRole)) { RemoteDeploy }
     else 
     {
-        Start-Process "\\storagedept\Dept\ITUserServices\Utilities\RemoteDeploy\run.cmd" -Verb RunAs -WindowStyle Hidden
+        Start-Process "\\redacted\RemoteDeploy\run.cmd" -Verb RunAs -WindowStyle Hidden
         Exit
     }
 }
