@@ -1,35 +1,42 @@
 #1
 #networkshare  \\print  Please select a printer
 
-# Exit codes
-$completed   =  0,"."
-$connected   = -1,"."
-$copying     = -2,"."
-$installing  = -3,"."
-$verifying   = -4,"."
-$customMsg   = 1
-$copyErr     = 2
-$installErr  = 3
-$verErr      = 4,"."
+$returnCodes = $args[9]
+Invoke-Expression $returnCodes
 
-$printer = $args[1]
+$printer = $args[0]
 $printerPath = "\\print\$printer"
 
-Write-Output $connected
-Start-Sleep 1
+status connected
 
-Write-Output $installing
-Start-Sleep 1
-try
-{   
-    cmd.exe /c "RUNDLL32 PRINTUI.DLL, PrintUIEntry /ga /u /n`"$printerPath`"" 
-    Write-Output $completed
-    return
-}
-catch
+function Test-PrintUIPrinter
 {
-    Write-Output $installErr, $_
+    param
+    (
+        [parameter(Mandatory=$true)]
+        [string]$PrinterName
+    )
+
+    $path = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\Connections'
+    if (!(Test-Path $path)) { throw "Print UI registry path not found" }
+    foreach ($printer in (Get-ChildItem $path))
+    {
+        if (($printer | Get-ItemProperty).printer -like $PrinterName) { return $true }
+    }
+    return $false
 }
 
 start-sleep 1
-Write-Output $verErr
+status "Checking installed printers"
+Start-Sleep 1
+if (Test-PrintUIPrinter -PrinterName $printerPath) { customMessage "'$printer' was already installed" }
+else
+{
+    status installing
+    Start-Sleep 1
+    printui.exe /ga /n "$printerPath"
+    status verifying
+    Start-Sleep 5
+    if (Test-PrintUIPrinter -PrinterName $printerPath) { customMessage "Successfully installed '$printer'. User will need to re-login to apply changes" }
+    else { error verErr "installation could not be verified" }
+}
